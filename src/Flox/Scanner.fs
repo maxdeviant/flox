@@ -85,6 +85,10 @@ type Scanner(source: string) =
     let peek () =
         if isAtEnd () then Char.MinValue
         else source[current]
+        
+    let peekNext () =
+        if current + 1 >= source.Length then Char.MinValue
+        else source[current + 1]
 
     let advance () =
         let char = source[current]
@@ -98,7 +102,7 @@ type Scanner(source: string) =
 
         if isAtEnd () then Error.error line "Unterminated string."
         else
-            // The closing ".
+            // The closing `"`.
             advance ()
 
             // Trim the surrounding quotes.
@@ -107,6 +111,21 @@ type Scanner(source: string) =
 
             source[start..current - 1]
             |> addToken String
+
+    let isDigit char = char >= '0' && char <= '9'
+
+    let number () =
+        while peek () |> isDigit do advance ()
+
+        // Look for a fractional part.
+        if peek () = '.' && peekNext () |> isDigit then
+            // Consume the `.`.
+            advance ()
+
+            while peek () |> isDigit do advance ()
+
+        Double.Parse(source[start..current - 1])
+        |> addToken Number
 
     let scanToken () =
         let matches expected =
@@ -142,7 +161,9 @@ type Scanner(source: string) =
             ()
         | '\n' -> line <- line + 1
         | '"' -> string' ()
-        | char -> Error.error line <| sprintf "Unexpected character '%c'." char
+        | char ->
+            if char |> isDigit then number ()
+            else Error.error line <| sprintf "Unexpected character '%c'." char
 
     member _.ScanTokens() =
         while not <| isAtEnd () do
