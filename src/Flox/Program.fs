@@ -4,6 +4,7 @@ open System
 open System.IO
 open System.Text
 
+open Flox.Expr
 open Flox.Scanner
 
 let mutable hadError = false
@@ -32,6 +33,18 @@ let runPrompt () =
 
 [<EntryPoint>]
 let main args =
+    let expression =
+        Binary(
+            Unary(
+                { Type = Minus; Lexeme = "-"; Literal = null; Line = 1},
+                Literal 123
+            ),
+            { Type = Star; Lexeme = "*"; Literal = null; Line = 1},
+            Grouping (Literal 45.67)
+        )
+
+    printfn "%s" <| printExpr expression
+
     match args.Length with
     | 0 -> runPrompt ()
     | 1 -> runFile (args[0])
