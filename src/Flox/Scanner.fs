@@ -3,62 +3,7 @@ module Flox.Scanner
 open System
 open System.Collections.Generic
 
-type TokenType =
-    // Single-character tokens.
-    | LeftParen
-    | RightParen
-    | LeftBrace
-    | RightBrace
-    | Comma
-    | Dot
-    | Minus
-    | Plus
-    | Semicolon
-    | Slash
-    | Star
-
-    // One of two character tokens.
-    | Bang
-    | BangEqual
-    | Equal
-    | EqualEqual
-    | Greater
-    | GreaterEqual
-    | Less
-    | LessEqual
-
-    // Literals.
-    | Identifier
-    | String
-    | Number
-
-    // Keywords.
-    | And
-    | Class
-    | Else
-    | False
-    | Fun
-    | For
-    | If
-    | Nil
-    | Or
-    | Print
-    | Return
-    | Super
-    | This
-    | True
-    | Var
-    | While
-
-    | Eof
-
-type Token =
-    {
-        Type: TokenType
-        Lexeme: string
-        Literal: Object
-        Line: int
-    }
+open Flox.Token
 
 let keywords =
     Map.empty
@@ -114,7 +59,7 @@ type Scanner(source: string) =
         current <- current + 1
         char
 
-    let advance' () = ignore <| advance ()
+    let advance' = advance >> ignore
 
     let string' () =
         while peek () <> '"' && not <| isAtEnd () do

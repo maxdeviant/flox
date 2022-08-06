@@ -5,7 +5,9 @@ open System.IO
 open System.Text
 
 open Flox.Expr
+open Flox.Parser
 open Flox.Scanner
+open Flox.Token
 
 let mutable hadError = false
 
@@ -13,8 +15,14 @@ let run source =
     let scanner = Scanner(source)
     let tokens = scanner.ScanTokens()
 
-    for token in tokens do
-        printfn "%A" token
+    let parser = Parser(tokens)
+    let expression = parser.Parse()
+
+    match hadError, expression with
+    | true, _
+    | false, None -> ()
+    | false, Some expression ->
+        printfn "%s" <| printExpr expression
 
 let runFile path =
     let bytes = File.ReadAllBytes(path)
@@ -33,18 +41,6 @@ let runPrompt () =
 
 [<EntryPoint>]
 let main args =
-    let expression =
-        Binary(
-            Unary(
-                { Type = Minus; Lexeme = "-"; Literal = null; Line = 1},
-                Literal 123
-            ),
-            { Type = Star; Lexeme = "*"; Literal = null; Line = 1},
-            Grouping (Literal 45.67)
-        )
-
-    printfn "%s" <| printExpr expression
-
     match args.Length with
     | 0 -> runPrompt ()
     | 1 -> runFile (args[0])

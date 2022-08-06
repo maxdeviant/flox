@@ -3,7 +3,7 @@ module Flox.Expr
 open System
 open System.Text
 
-open Flox.Scanner
+open Flox.Token
 
 type Expr =
     | Binary of left: Expr * operator: Token * right: Expr

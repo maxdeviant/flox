@@ -4,9 +4,11 @@
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Token.fs" />
     <Compile Include="Error.fs" />
     <Compile Include="Scanner.fs" />
     <Compile Include="Expr.fs" />
+    <Compile Include="Parser.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 </Project>
