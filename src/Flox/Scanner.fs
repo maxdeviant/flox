@@ -116,7 +116,7 @@ type Scanner(source: string) =
                 current <- current + 1
                 true
 
-        let matchEqual op equalOp = if matches '=' then op else equalOp
+        let matchEqual equalOp op = if matches '=' then equalOp else op
 
         match advance () with
         | '(' -> addToken' LeftParen
@@ -129,12 +129,13 @@ type Scanner(source: string) =
         | '+' -> addToken' Plus
         | ';' -> addToken' Semicolon
         | '*' -> addToken' Star
-        | '!' -> addToken' <| matchEqual Bang BangEqual
-        | '=' -> addToken' <| matchEqual Equal EqualEqual
-        | '<' -> addToken' <| matchEqual Less LessEqual
-        | '>' -> addToken' <| matchEqual Greater GreaterEqual
+        | '!' -> addToken' <| matchEqual BangEqual Bang
+        | '=' -> addToken' <| matchEqual EqualEqual Equal
+        | '<' -> addToken' <| matchEqual LessEqual Less
+        | '>' -> addToken' <| matchEqual GreaterEqual Greater
         | '/' ->
             if matches '/' then
+                // A comment goes until the end of the line.
                 while peek () <> '\n' && not <| isAtEnd () do ignore <| advance ()
             else addToken' Slash
         | ' ' | '\r' | '\t' ->
