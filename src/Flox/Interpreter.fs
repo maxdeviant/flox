@@ -67,6 +67,13 @@ type Interpreter() =
             let value = evaluate value
             environment.Assign(name, value)
             value
+        | Logical(left, operator, right) ->
+            let left = evaluate left
+
+            match operator.Type, left |> isTruthy with
+            | Or, true -> left
+            | And, false -> left
+            | _ -> evaluate right
         | Binary(left, operator, right) ->
             let left = evaluate left
             let right = evaluate right

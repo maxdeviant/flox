@@ -81,6 +81,16 @@ type Parser(tokens: List<Token>) =
 
         expr
 
+    let logicalExprParser types operand () =
+        let mutable expr = operand ()
+
+        while match' types do
+            let operator = previous ()
+            let right = operand ()
+            expr <- Logical(expr, operator, right)
+
+        expr
+
     let rec primary () =
         match true with
         | _ when match' [False] -> Literal false
@@ -111,8 +121,12 @@ type Parser(tokens: List<Token>) =
 
     and equality = binaryExprParser [BangEqual; EqualEqual] comparison
 
+    and logicalAnd = logicalExprParser [And] equality
+
+    and logicalOr = logicalExprParser [Or] logicalAnd
+
     and assignment () =
-        let expr = equality ()
+        let expr = logicalOr ()
 
         if match' [Equal] then
             let equals = previous ()

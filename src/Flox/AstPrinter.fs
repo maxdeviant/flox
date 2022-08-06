@@ -24,5 +24,6 @@ let rec printExpr expr : string =
     | Binary(left, operator, right) -> parenthesize operator.Lexeme [left; right]
     | Grouping expr -> parenthesize "group" [expr]
     | Literal value -> if value = null then "nil" else value.ToString()
+    | Logical(left, operator, right) -> parenthesize operator.Lexeme [left; right]
     | Unary(operator, right) -> parenthesize operator.Lexeme [right]
     | Variable name -> parenthesize name.Lexeme []
