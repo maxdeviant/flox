@@ -20,7 +20,7 @@ let run source =
     | true, _
     | false, None -> ()
     | false, Some expression ->
-        printfn "%s" <| printExpr expression
+        printfn "%s" <| AstPrinter.printExpr expression
 
 let runFile path =
     let bytes = File.ReadAllBytes(path)
