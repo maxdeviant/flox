@@ -1,4 +1,4 @@
-﻿module Flox.Program
+module Flox.Program
 
 open System
 open System.IO
