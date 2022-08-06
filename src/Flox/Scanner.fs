@@ -97,7 +97,7 @@ type Scanner(source: string) =
         | '+' -> addToken' Plus
         | ';' -> addToken' Semicolon
         | '*' -> addToken' Star
-        | _ -> ()
+        | char -> Error.error line <| sprintf "Unexpected character '%c'." char
 
     let isAtEnd () =
         current >= source.Length

@@ -30,12 +30,6 @@ let runPrompt () =
             run line
             hadError <- false
 
-let report line where message =
-    printfn "[line %i] Error%s: %s" line where message
-
-let error line message =
-    report line "" message
-
 [<EntryPoint>]
 let main args =
     match args.Length with

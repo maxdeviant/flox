@@ -4,6 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Error.fs" />
     <Compile Include="Scanner.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
