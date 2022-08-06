@@ -1,7 +1,5 @@
 module Flox.Token
 
-open System
-
 type TokenType =
     // Single-character tokens.
     | LeftParen
@@ -55,6 +53,6 @@ type Token =
     {
         Type: TokenType
         Lexeme: string
-        Literal: Object
+        Literal: obj
         Line: int
     }
