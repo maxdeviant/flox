@@ -1,10 +1,26 @@
 module Flox.Interpreter
 
 open System
+open System.Collections.Generic
 
 open Flox.Error
 open Flox.Expr
+open Flox.Stmt
 open Flox.Token
+
+let stringify (value: obj) =
+    match value with
+    | null -> "nil"
+    | :? bool ->
+        match unbox<bool> value with
+        | true -> "true"
+        | false -> "false"
+    | :? double ->
+        let text = value.ToString()
+        if text.EndsWith(".0") then
+            text[0..text.Length - 2 - 1]
+        else text
+    | _ -> value.ToString()
 
 let rec evaluate expr =
     let isEqual (a: obj) (b: obj) =
@@ -13,7 +29,6 @@ let rec evaluate expr =
         | null, _
         | _, null -> false
         | _ -> a.Equals(b)
-
 
     let isTruthy (value: obj) =
         match value with
@@ -87,20 +102,17 @@ let rec evaluate expr =
             | _ -> raise <| RuntimeError(operator, "Operands must be two numbers or two strings.")
         | _ -> failwith "Unreachable."
 
-let stringify (value: obj) =
-    match value with
-    | null -> "nil"
-    | :? double ->
-        let text = value.ToString()
-        if text.EndsWith(".0") then
-            text[0..text.Length - 2 - 1]
-        else text
-    | _ -> value.ToString()
-
-let interpret expr =
-    try
+let execute stmt =
+    match stmt with
+    | Expression expr -> expr |> evaluate |> ignore
+    | Stmt.Print expr ->
         let value = evaluate expr
         printfn "%s" <| stringify value
+
+let interpret (statements: List<Stmt>) =
+    try
+        for statement in statements do
+            execute statement
     with
     | :? RuntimeError as error ->
         Error.runtimeError error

@@ -14,13 +14,11 @@ let run source =
     let tokens = scanner.ScanTokens()
 
     let parser = Parser(tokens)
-    let expression = parser.Parse()
+    let statements = parser.Parse()
 
-    match Error.hadError, expression with
-    | true, _
-    | false, None -> ()
-    | false, Some expression ->
-        Interpreter.interpret expression
+    match Error.hadError with
+    | true -> ()
+    | false -> Interpreter.interpret statements
 
 let runFile path =
     let bytes = File.ReadAllBytes(path)

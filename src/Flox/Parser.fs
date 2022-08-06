@@ -3,6 +3,7 @@ module Flox.Parser
 open System.Collections.Generic
 
 open Flox.Expr
+open Flox.Stmt
 open Flox.Token
 
 exception ParseError of unit
@@ -68,6 +69,8 @@ type Parser(tokens: List<Token>) =
         if check ty then advance ()
         else raise <| error (peek ()) message
 
+    let consume' ty message = consume ty message |> ignore
+
     let binaryExprParser types operand () =
         let mutable expr = operand ()
 
@@ -109,7 +112,24 @@ type Parser(tokens: List<Token>) =
 
     and expression = equality
 
+    let printStatement () =
+        let value = expression ()
+        consume' Semicolon "Expected ';' after value."
+        Stmt.Print value
+
+    let expressionStatement () =
+        let expr = expression ()
+        consume' Semicolon "Expected ';' after expression."
+        Expression expr
+
+    let statement () =
+        if match' [Print] then printStatement ()
+        else expressionStatement()
+
     member _.Parse() =
-        try expression () |> Some
-        with
-        | :? ParseError -> None
+        let statements = List<Stmt>()
+
+        while not <| isAtEnd() do
+            statements.Add(statement ())
+        
+        statements
