@@ -23,6 +23,12 @@ let stringify (value: obj) =
         else text
     | _ -> value.ToString()
 
+let isTruthy (value: obj) =
+    match value with
+    | null -> false
+    | :? Boolean as bool -> bool
+    | _ -> true
+
 type Interpreter() =
     let mutable environment = Environment()
 
@@ -33,12 +39,6 @@ type Interpreter() =
             | null, _
             | _, null -> false
             | _ -> a.Equals(b)
-
-        let isTruthy (value: obj) =
-            match value with
-            | null -> false
-            | :? Boolean as bool -> bool
-            | _ -> true
 
         let checkNumberOperand operator (operand: obj) =
             match operand with
@@ -128,6 +128,13 @@ type Interpreter() =
             let newEnvironment = Environment(Some environment)
             executeBlock statements newEnvironment
         | Expression expr -> expr |> evaluate |> ignore
+        | Stmt.If(condition, thenBranch, elseBranch) ->
+            if condition |> evaluate |> isTruthy then
+                execute thenBranch
+            else
+                match elseBranch with
+                | Some elseBranch -> execute elseBranch
+                | None -> ()
         | Stmt.Print expr ->
             let value = evaluate expr
             printfn "%s" <| stringify value

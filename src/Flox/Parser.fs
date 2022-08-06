@@ -158,8 +158,21 @@ type Parser(tokens: List<Token>) =
         consume' RightBrace "Expected '}' after block."
         statements |> List.ofSeq
 
+    and ifStatement () =
+        consume' LeftParen "Expected '(' after 'if'."
+        let condition = expression ()
+        consume' RightParen "Expected ')' after if condition."
+
+        let thenBranch = statement ()
+        let elseBranch =
+            if match' [Else] then Some <| statement ()
+            else None
+
+        Stmt.If(condition, thenBranch, elseBranch)
+
     and statement () =
-        if match' [Print] then printStatement ()
+        if match' [If] then ifStatement ()
+        elif match' [Print] then printStatement ()
         elif match' [LeftBrace] then Block <| block ()
         else expressionStatement()
 
