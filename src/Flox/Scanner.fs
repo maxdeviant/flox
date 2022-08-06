@@ -60,6 +60,25 @@ type Token =
         Line: int
     }
 
+let keywords =
+    Map.empty
+    |> Map.add "and" And
+    |> Map.add "class" Class
+    |> Map.add "else" Else
+    |> Map.add "false" False
+    |> Map.add "for" For
+    |> Map.add "fun" Fun
+    |> Map.add "if" If
+    |> Map.add "nil" Nil
+    |> Map.add "or" Or
+    |> Map.add "print" Print
+    |> Map.add "return" Return
+    |> Map.add "super" Super
+    |> Map.add "this" This
+    |> Map.add "true" True
+    |> Map.add "var" Var
+    |> Map.add "while" While
+
 type Scanner(source: string) =
     let tokens = List<Token>()
 
@@ -95,15 +114,17 @@ type Scanner(source: string) =
         current <- current + 1
         char
 
+    let advance' () = ignore <| advance ()
+
     let string' () =
         while peek () <> '"' && not <| isAtEnd () do
             if peek () = '\n' then line <- line + 1
-            advance ()
+            advance' ()
 
         if isAtEnd () then Error.error line "Unterminated string."
         else
             // The closing `"`.
-            advance ()
+            advance' ()
 
             // Trim the surrounding quotes.
             let start = start + 1
@@ -115,17 +136,32 @@ type Scanner(source: string) =
     let isDigit char = char >= '0' && char <= '9'
 
     let number () =
-        while peek () |> isDigit do advance ()
+        while peek () |> isDigit do advance' ()
 
         // Look for a fractional part.
         if peek () = '.' && peekNext () |> isDigit then
             // Consume the `.`.
-            advance ()
+            advance' ()
 
-            while peek () |> isDigit do advance ()
+            while peek () |> isDigit do advance' ()
 
         Double.Parse(source[start..current - 1])
         |> addToken Number
+
+    let isAlpha char =
+        (char >= 'a' && char <= 'z') ||
+        (char >= 'A' && char <= 'Z') ||
+        char = '_'
+
+    let isAlphaNumeric char = isAlpha char || isDigit char
+
+    let identifier () =
+        while peek () |> isAlphaNumeric do advance' ()
+
+        let text = source[start..current - 1]
+        let ty = keywords |> Map.tryFind text |> Option.defaultValue Identifier
+
+        addToken' ty
 
     let scanToken () =
         let matches expected =
@@ -162,8 +198,10 @@ type Scanner(source: string) =
         | '\n' -> line <- line + 1
         | '"' -> string' ()
         | char ->
-            if char |> isDigit then number ()
-            else Error.error line <| sprintf "Unexpected character '%c'." char
+            match char with
+            | char when char |> isDigit -> number ()
+            | char when char |> isAlpha -> identifier ()
+            | char -> Error.error line <| sprintf "Unexpected character '%c'." char
 
     member _.ScanTokens() =
         while not <| isAtEnd () do
