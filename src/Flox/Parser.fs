@@ -89,6 +89,7 @@ type Parser(tokens: List<Token>) =
         | _ when match' [Number; String] ->
             let previousToken = previous ()
             Literal previousToken.Literal
+        | _ when match' [Identifier] -> Variable <| previous ()
         | _ when match' [LeftParen] ->
             let expr = expression ()
             ignore <| consume RightParen "Expected ')' after expression."
@@ -117,6 +118,16 @@ type Parser(tokens: List<Token>) =
         consume' Semicolon "Expected ';' after value."
         Stmt.Print value
 
+    let varDeclaration () =
+        let name = consume Identifier "Expected variable name."
+
+        let initializer =
+            if match' [Equal] then Some <| expression ()
+            else None
+
+        consume' Semicolon "Expected ';' after variable declaration."
+        Stmt.Var(name, initializer)
+
     let expressionStatement () =
         let expr = expression ()
         consume' Semicolon "Expected ';' after expression."
@@ -126,10 +137,23 @@ type Parser(tokens: List<Token>) =
         if match' [Print] then printStatement ()
         else expressionStatement()
 
+    let declaration () =
+        try
+            if match' [Var] then varDeclaration ()
+            else statement ()
+            |> Some
+        with
+        | :? ParseError as error ->
+            synchronize ()
+            None
+
     member _.Parse() =
         let statements = List<Stmt>()
 
         while not <| isAtEnd() do
-            statements.Add(statement ())
+            match declaration () with
+            | Some declaration ->
+                statements.Add(declaration)
+            | None -> ()
         
         statements

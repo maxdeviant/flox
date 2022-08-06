@@ -5,6 +5,7 @@ open System.IO
 open System.Text
 
 open Flox.Expr
+open Flox.Interpreter
 open Flox.Parser
 open Flox.Scanner
 open Flox.Token
@@ -16,9 +17,11 @@ let run source =
     let parser = Parser(tokens)
     let statements = parser.Parse()
 
+    let interpreter = Interpreter()
+
     match Error.hadError with
     | true -> ()
-    | false -> Interpreter.interpret statements
+    | false -> interpreter.Interpret(statements)
 
 let runFile path =
     let bytes = File.ReadAllBytes(path)

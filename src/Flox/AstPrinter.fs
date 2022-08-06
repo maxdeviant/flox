@@ -24,3 +24,4 @@ let rec printExpr expr : string =
     | Grouping expr -> parenthesize "group" [expr]
     | Literal value -> if value = null then "nil" else value.ToString()
     | Unary(operator, right) -> parenthesize operator.Lexeme [right]
+    | Variable name -> parenthesize name.Lexeme []

@@ -7,3 +7,4 @@ type Expr =
     | Grouping of Expr
     | Literal of obj
     | Unary of operator: Token * right: Expr
+    | Variable of name: Token
