@@ -84,10 +84,10 @@ type Scanner(source: string) =
 
     let peek () =
         if isAtEnd () then Char.MinValue
-        else source.[current]
+        else source[current]
 
     let advance () =
-        let char = source.[current]
+        let char = source[current]
         current <- current + 1
         char
 
@@ -111,7 +111,7 @@ type Scanner(source: string) =
     let scanToken () =
         let matches expected =
             if isAtEnd () then false
-            elif source.[current] <> expected then false
+            elif source[current] <> expected then false
             else
                 current <- current + 1
                 true

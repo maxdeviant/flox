@@ -34,7 +34,7 @@ let runPrompt () =
 let main args =
     match args.Length with
     | 0 -> runPrompt ()
-    | 1 -> runFile (args.[0])
+    | 1 -> runFile (args[0])
     | _ ->
         printfn "Usage: flox [script]"
         exit 64
