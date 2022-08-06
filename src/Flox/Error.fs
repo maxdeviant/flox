@@ -2,8 +2,11 @@ module Flox.Error
 
 open Flox.Token
 
+let mutable hadError = false
+
 let report line where message =
     printfn "[line %i] Error%s: %s" line where message
+    hadError <- true
 
 let error line message =
     report line "" message

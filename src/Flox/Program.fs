@@ -9,8 +9,6 @@ open Flox.Parser
 open Flox.Scanner
 open Flox.Token
 
-let mutable hadError = false
-
 let run source =
     let scanner = Scanner(source)
     let tokens = scanner.ScanTokens()
@@ -18,7 +16,7 @@ let run source =
     let parser = Parser(tokens)
     let expression = parser.Parse()
 
-    match hadError, expression with
+    match Error.hadError, expression with
     | true, _
     | false, None -> ()
     | false, Some expression ->
@@ -27,7 +25,7 @@ let run source =
 let runFile path =
     let bytes = File.ReadAllBytes(path)
     run <| Encoding.UTF8.GetString(bytes)
-    if hadError then exit 65
+    if Error.hadError then exit 65
 
 let runPrompt () =
     let mutable quitPrompt = false
@@ -37,7 +35,7 @@ let runPrompt () =
         if String.IsNullOrEmpty line then quitPrompt <- true
         else
             run line
-            hadError <- false
+            Error.hadError <- false
 
 [<EntryPoint>]
 let main args =
