@@ -5,6 +5,9 @@ open System
 open Flox.Expr
 open Flox.Token
 
+type RuntimeError(token: Token, message: string) =
+    inherit Exception(message)
+
 let rec evaluate expr =
     let isEqual (a: obj) (b: obj) =
         match a, b with
@@ -20,6 +23,16 @@ let rec evaluate expr =
         | :? Boolean as bool -> bool
         | _ -> true
 
+    let checkNumberOperand operator (operand: obj) =
+        match operand with
+        | :? double -> operand |> unbox<double>
+        | _ -> raise <| RuntimeError(operator, "Operand must be a number.")
+
+    let checkNumberOperands operator (left: obj) (right: obj) =
+        match left, right with
+        | :? double, :? double -> (left |> unbox<double>, right |> unbox<double>)
+        | _ -> raise <| RuntimeError(operator, "Operands must be numbers.")
+
     match expr with
     | Literal value -> value
     | Grouping expr -> evaluate expr
@@ -28,7 +41,9 @@ let rec evaluate expr =
 
         match operator.Type with
         | Bang -> not (isTruthy right)
-        | Minus -> -(right |> unbox<double>)
+        | Minus ->
+            let right = checkNumberOperand operator right
+            -right
         | _ -> failwith "Unreachable."
     | Binary(left, operator, right) ->
         let left = evaluate left
@@ -39,6 +54,8 @@ let rec evaluate expr =
         | GreaterEqual
         | Less
         | LessEqual ->
+            let checkNumberOperands' = checkNumberOperands operator
+
             let operator =
                 match operator.Type with
                 | Greater -> (>)
@@ -47,13 +64,14 @@ let rec evaluate expr =
                 | LessEqual -> (<=)
                 | _ -> failwith "Unreachable."
 
-            let left = left |> unbox<double>
-            let right = right |> unbox<double>
+            let (left, right) = checkNumberOperands' left right
 
             operator left right |> box
         | Minus
         | Slash
         | Star ->
+            let checkNumberOperands' = checkNumberOperands operator
+
             let operator =
                 match operator.Type with
                 | Minus -> (-)
@@ -61,13 +79,12 @@ let rec evaluate expr =
                 | Star -> (*)
                 | _ -> failwith "Unreachable."
 
-            let left = left |> unbox<double>
-            let right = right |> unbox<double>
+            let (left, right) = checkNumberOperands' left right
 
             operator left right |> box
         | Plus ->
             match left, right with
             | :? double, :? double -> unbox<double> left + unbox<double> right |> box
             | :? string, :? string -> unbox<string> left + unbox<string> right |> box
-            | _ -> failwith "Unreachable."
+            | _ -> raise <| RuntimeError(operator, "Operands must be two numbers or two strings.")
         | _ -> failwith "Unreachable."
