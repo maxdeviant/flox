@@ -73,7 +73,7 @@ type Scanner(source: string) =
         let token =
             {
                 Type = ty
-                Lexeme = source.Substring(start, current - start)
+                Lexeme = source[start..current - 1]
                 Literal = literal
                 Line = line
             }
