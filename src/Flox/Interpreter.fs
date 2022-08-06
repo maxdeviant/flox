@@ -24,7 +24,7 @@ let stringify (value: obj) =
     | _ -> value.ToString()
 
 type Interpreter() =
-    let environment = Environment()
+    let mutable environment = Environment()
 
     let rec evaluate expr =
         let isEqual (a: obj) (b: obj) =
@@ -111,8 +111,22 @@ type Interpreter() =
                 | _ -> raise <| RuntimeError(operator, "Operands must be two numbers or two strings.")
             | _ -> failwith "Unreachable."
 
-    let execute stmt =
+    let rec executeBlock statements newEnvironment =
+        let previous = environment;
+
+        try
+            environment <- newEnvironment;
+
+            for statement in statements do
+                execute statement
+        finally
+            environment <- previous
+
+    and execute stmt =
         match stmt with
+        | Block statements ->
+            let newEnvironment = Environment(Some environment)
+            executeBlock statements newEnvironment
         | Expression expr -> expr |> evaluate |> ignore
         | Stmt.Print expr ->
             let value = evaluate expr

@@ -147,11 +147,23 @@ type Parser(tokens: List<Token>) =
         consume' Semicolon "Expected ';' after expression."
         Expression expr
 
-    let statement () =
+    let rec block () =
+        let statements = List<Stmt>()
+
+        while not <| check RightBrace && not <| isAtEnd () do
+            match declaration () with
+            | Some declaration -> statements.Add(declaration)
+            | None -> ()
+
+        consume' RightBrace "Expected '}' after block."
+        statements |> List.ofSeq
+
+    and statement () =
         if match' [Print] then printStatement ()
+        elif match' [LeftBrace] then Block <| block ()
         else expressionStatement()
 
-    let declaration () =
+    and declaration () =
         try
             if match' [Var] then varDeclaration ()
             else statement ()
