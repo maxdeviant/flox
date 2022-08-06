@@ -67,6 +67,8 @@ type Scanner(source: string) =
     let mutable current = 0
     let mutable line = 1
 
+    let isAtEnd () = current >= source.Length
+
     let addToken ty literal =
         let token =
             {
@@ -80,12 +82,42 @@ type Scanner(source: string) =
 
     let addToken' ty = addToken ty null
 
+    let peek () =
+        if isAtEnd () then Char.MinValue
+        else source.[current]
+
     let advance () =
         let char = source.[current]
         current <- current + 1
         char
 
+    let string' () =
+        while peek () <> '"' && not <| isAtEnd () do
+            if peek () = '\n' then line <- line + 1
+            advance ()
+
+        if isAtEnd () then Error.error line "Unterminated string."
+        else
+            // The closing ".
+            advance ()
+
+            // Trim the surrounding quotes.
+            let start = start + 1
+            let current = current - 1
+
+            source[start..current - 1]
+            |> addToken String
+
     let scanToken () =
+        let matches expected =
+            if isAtEnd () then false
+            elif source.[current] <> expected then false
+            else
+                current <- current + 1
+                true
+
+        let matchEqual op equalOp = if matches '=' then op else equalOp
+
         match advance () with
         | '(' -> addToken' LeftParen
         | ')' -> addToken' RightParen
@@ -97,10 +129,20 @@ type Scanner(source: string) =
         | '+' -> addToken' Plus
         | ';' -> addToken' Semicolon
         | '*' -> addToken' Star
+        | '!' -> addToken' <| matchEqual Bang BangEqual
+        | '=' -> addToken' <| matchEqual Equal EqualEqual
+        | '<' -> addToken' <| matchEqual Less LessEqual
+        | '>' -> addToken' <| matchEqual Greater GreaterEqual
+        | '/' ->
+            if matches '/' then
+                while peek () <> '\n' && not <| isAtEnd () do ignore <| advance ()
+            else addToken' Slash
+        | ' ' | '\r' | '\t' ->
+            // Ignore whitespace.
+            ()
+        | '\n' -> line <- line + 1
+        | '"' -> string' ()
         | char -> Error.error line <| sprintf "Unexpected character '%c'." char
-
-    let isAtEnd () =
-        current >= source.Length
 
     member _.ScanTokens() =
         while not <| isAtEnd () do
