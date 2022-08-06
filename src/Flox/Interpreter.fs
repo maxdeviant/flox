@@ -2,11 +2,9 @@ module Flox.Interpreter
 
 open System
 
+open Flox.Error
 open Flox.Expr
 open Flox.Token
-
-type RuntimeError(token: Token, message: string) =
-    inherit Exception(message)
 
 let rec evaluate expr =
     let isEqual (a: obj) (b: obj) =
@@ -88,3 +86,21 @@ let rec evaluate expr =
             | :? string, :? string -> unbox<string> left + unbox<string> right |> box
             | _ -> raise <| RuntimeError(operator, "Operands must be two numbers or two strings.")
         | _ -> failwith "Unreachable."
+
+let stringify (value: obj) =
+    match value with
+    | null -> "nil"
+    | :? double ->
+        let text = value.ToString()
+        if text.EndsWith(".0") then
+            text[0..text.Length - 2 - 1]
+        else text
+    | _ -> value.ToString()
+
+let interpret expr =
+    try
+        let value = evaluate expr
+        printfn "%s" <| stringify value
+    with
+    | :? RuntimeError as error ->
+        Error.runtimeError error

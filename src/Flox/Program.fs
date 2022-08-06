@@ -20,12 +20,13 @@ let run source =
     | true, _
     | false, None -> ()
     | false, Some expression ->
-        printfn "%s" <| AstPrinter.printExpr expression
+        Interpreter.interpret expression
 
 let runFile path =
     let bytes = File.ReadAllBytes(path)
     run <| Encoding.UTF8.GetString(bytes)
     if Error.hadError then exit 65
+    if Error.hadRuntimeError then exit 70
 
 let runPrompt () =
     let mutable quitPrompt = false
