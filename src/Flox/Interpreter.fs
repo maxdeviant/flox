@@ -63,6 +63,10 @@ type Interpreter() =
                 -right
             | _ -> failwith "Unreachable."
         | Variable name -> environment.Get(name)
+        | Assign(name, value) ->
+            let value = evaluate value
+            environment.Assign(name, value)
+            value
         | Binary(left, operator, right) ->
             let left = evaluate left
             let right = evaluate right

@@ -111,7 +111,21 @@ type Parser(tokens: List<Token>) =
 
     and equality = binaryExprParser [BangEqual; EqualEqual] comparison
 
-    and expression = equality
+    and assignment () =
+        let expr = equality ()
+
+        if match' [Equal] then
+            let equals = previous ()
+            let value = assignment ()
+            
+            match expr with
+            | Variable(name) -> Assign(name, value)
+            | _ ->
+                Error.errorAtToken equals "Invalid assignment target."
+                expr
+        else expr
+
+    and expression = assignment
 
     let printStatement () =
         let value = expression ()

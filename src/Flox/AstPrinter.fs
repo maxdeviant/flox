@@ -20,6 +20,7 @@ let rec printExpr expr : string =
         builder.ToString()
 
     match expr with
+    | Assign _ -> parenthesize "assign" [expr]
     | Binary(left, operator, right) -> parenthesize operator.Lexeme [left; right]
     | Grouping expr -> parenthesize "group" [expr]
     | Literal value -> if value = null then "nil" else value.ToString()
