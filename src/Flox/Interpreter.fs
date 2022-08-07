@@ -29,7 +29,7 @@ let isTruthy (value: obj) =
     | :? Boolean as bool -> bool
     | _ -> true
 
-type Interpreter() =
+type Interpreter() as interpreter =
     let mutable environment = Environment()
 
     let rec evaluate expr =
@@ -117,6 +117,19 @@ type Interpreter() =
                 | :? string, :? string -> unbox<string> left + unbox<string> right |> box
                 | _ -> raise <| RuntimeError(operator, "Operands must be two numbers or two strings.")
             | _ -> failwith "Unreachable."
+        | Call(callee, closingParen, arguments) ->
+            let callee = evaluate callee
+
+            let arguments = arguments |> List.map evaluate
+
+            match callee with
+            | :? IFloxCallable as fn ->
+                let argumentCount = arguments |> List.length
+                if argumentCount <> fn.Arity then
+                    raise <| RuntimeError(closingParen, sprintf "Expected %i arguments but got %i." fn.Arity argumentCount)
+
+                fn.Call interpreter arguments
+            | _ -> raise <| RuntimeError(closingParen, "Can only call functions and classes.")
 
     let rec executeBlock statements newEnvironment =
         let previous = environment;
@@ -163,3 +176,7 @@ type Interpreter() =
         with
         | :? RuntimeError as error ->
             Error.runtimeError error
+
+and IFloxCallable =
+    abstract member Arity: int
+    abstract member Call: interpreter: Interpreter -> arguments: obj list -> obj

@@ -106,12 +106,41 @@ type Parser(tokens: List<Token>) =
             Grouping expr
         | _ -> raise <| error (peek ()) "Expected expression."
 
+    and call () =
+        let finishCall callee =
+            let arguments = List<Expr>()
+
+            match check RightParen with
+            | false ->
+                arguments.Add(expression ())
+
+                while match' [Comma] do
+                    if arguments.Count >= 255 then
+                        Error.errorAtToken (peek ()) "Can't have more than 255 arguments."
+
+                    arguments.Add(expression ())
+            | true -> ()
+
+            let closingParen = consume RightParen "Expected ')' after arguments."
+
+            Call(callee, closingParen, arguments |> List.ofSeq)
+
+        let mutable expr = primary ()
+
+        let mutable finished = false
+        while not finished do
+            if match' [LeftParen] then
+                expr <- finishCall expr
+            else finished <- true
+
+        expr
+
     and unary () =
         if match' [Bang; Minus] then
             let operator = previous ()
             let right = unary ()
             Unary(operator, right)
-        else primary ()
+        else call ()
 
     and factor = binaryExprParser [Slash; Star] unary
 
