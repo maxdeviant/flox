@@ -9,6 +9,7 @@ type Stmt =
     | Function of FunctionDecl
     | If of condition: Expr * thenBranch: Stmt * elseBranch: Stmt option
     | Print of Expr
+    | Return of keyword: Token * value: Expr option
     | Var of name: Token * initializer: Expr option
     | While of condition: Expr * body: Stmt
 

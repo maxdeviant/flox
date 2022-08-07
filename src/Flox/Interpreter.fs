@@ -9,6 +9,8 @@ open Flox.Expr
 open Flox.Stmt
 open Flox.Token
 
+exception Return of value: obj
+
 let stringify (value: obj) =
     match value with
     | null -> "nil"
@@ -175,6 +177,13 @@ type Interpreter() as interpreter =
         | Stmt.Print expr ->
             let value = evaluate expr
             printfn "%s" <| stringify value
+        | Stmt.Return(keyword, value) ->
+            let value =
+                value
+                |> Option.map evaluate
+                |> Option.defaultValue null
+
+            raise <| Return value
         | Stmt.Var(name, initializer) ->
             let value =
                 match initializer with
@@ -223,6 +232,8 @@ and FloxFunction(declaration: FunctionDecl) =
             for i = 0 to parameterCount - 1 do
                 environment.Define(parameters[i], arguments[i])
 
-            interpreter.ExecuteBlock(body, environment)
-
-            null
+            try
+                interpreter.ExecuteBlock(body, environment)
+                null
+            with
+            | Return(value) -> value

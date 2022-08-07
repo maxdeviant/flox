@@ -180,6 +180,17 @@ type Parser(tokens: List<Token>) =
         consume' Semicolon "Expected ';' after value."
         Stmt.Print value
 
+    let returnStatement () =
+        let keyword = previous ()
+
+        let value =
+            match check Semicolon with
+            | false -> Some <| expression ()
+            | true -> None
+
+        consume' Semicolon "Expected ';' after return value."
+        Stmt.Return(keyword, value)
+
     let varDeclaration () =
         let name = consume Identifier "Expected variable name."
 
@@ -288,6 +299,7 @@ type Parser(tokens: List<Token>) =
         | _ when match' [For] -> forStatement ()
         | _ when match' [If] -> ifStatement ()
         | _ when match' [Print] -> printStatement ()
+        | _ when match' [Return] -> returnStatement ()
         | _ when match' [While] -> whileStatement ()
         | _ when match' [LeftBrace] -> Block <| block ()
         | _ -> expressionStatement()
