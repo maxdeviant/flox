@@ -193,8 +193,44 @@ type Parser(tokens: List<Token>) =
 
         Stmt.While(condition, body)
 
+    and forStatement () =
+        consume' LeftParen "Expected '(' after 'for'."
+
+        let initializer =
+            match true with
+            | _ when match' [Semicolon] -> None
+            | _ when match' [Var] -> Some <| varDeclaration ()
+            | _ -> Some <| expressionStatement ()
+
+        let condition =
+            match check Semicolon with
+            | false -> Some <| expression ()
+            | true -> None
+        consume' Semicolon "Expected ';' after for loop condition."
+
+        let increment =
+            match check RightParen with
+            | false -> Some <| expression ()
+            | true -> None
+        consume' RightParen "Expected ')' after for loop clauses."
+
+        statement ()
+        |> (fun body ->
+            match increment with
+            | Some increment -> Block [body; Expression increment]
+            | None -> body)
+        |> (fun body ->
+            let condition = condition |> Option.defaultValue (Literal true)
+
+            Stmt.While(condition, body))
+        |> (fun body ->
+            match initializer with
+            | Some initializer -> Block [initializer; body]
+            | None -> body)
+
     and statement () =
         match true with
+        | _ when match' [For] -> forStatement ()
         | _ when match' [If] -> ifStatement ()
         | _ when match' [Print] -> printStatement ()
         | _ when match' [While] -> whileStatement ()
