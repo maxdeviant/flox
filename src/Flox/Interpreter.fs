@@ -142,6 +142,9 @@ type Interpreter() =
                 match elseBranch with
                 | Some elseBranch -> execute elseBranch
                 | None -> ()
+        | Stmt.While(condition, body) ->
+            while condition |> evaluate |> isTruthy do
+                execute body
         | Stmt.Print expr ->
             let value = evaluate expr
             printfn "%s" <| stringify value

@@ -184,11 +184,22 @@ type Parser(tokens: List<Token>) =
 
         Stmt.If(condition, thenBranch, elseBranch)
 
+    and whileStatement () =
+        consume' LeftParen "Expected '(' after 'while'."
+        let condition = expression ()
+        consume' RightParen "Expected ')' after while condition."
+
+        let body = statement ()
+
+        Stmt.While(condition, body)
+
     and statement () =
-        if match' [If] then ifStatement ()
-        elif match' [Print] then printStatement ()
-        elif match' [LeftBrace] then Block <| block ()
-        else expressionStatement()
+        match true with
+        | _ when match' [If] -> ifStatement ()
+        | _ when match' [Print] -> printStatement ()
+        | _ when match' [While] -> whileStatement ()
+        | _ when match' [LeftBrace] -> Block <| block ()
+        | _ -> expressionStatement()
 
     and declaration () =
         try
