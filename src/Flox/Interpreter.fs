@@ -182,6 +182,13 @@ type Interpreter() as interpreter =
                 | None -> null
             
             environment.Define(name, value)
+        | Stmt.Function(FunctionDecl(name, parameters, body) as decl) ->
+            let fn = FloxFunction(decl)
+            environment.Define(name, fn)
+
+    member _.Globals = globals
+
+    member _.ExecuteBlock(body, environment) = executeBlock body environment
 
     member _.Interpret(statements: List<Stmt>) =
         try
@@ -194,3 +201,28 @@ type Interpreter() as interpreter =
 and IFloxCallable =
     abstract member Arity: int
     abstract member Call: interpreter: Interpreter -> arguments: obj list -> obj
+
+and FloxFunction(declaration: FunctionDecl) =
+    override _.ToString() =
+        let (FunctionDecl(name, _, _)) = declaration
+
+        $"<fn {name.Lexeme}>"
+
+    interface IFloxCallable with
+        member _.Arity =
+            let (FunctionDecl(_, parameters, _)) = declaration
+
+            parameters |> List.length
+
+        member _.Call interpreter arguments =
+            let (FunctionDecl(_, parameters, body)) = declaration
+
+            let environment = Environment(Some interpreter.Globals)
+
+            let parameterCount = parameters |> List.length
+            for i = 0 to parameterCount - 1 do
+                environment.Define(parameters[i], arguments[i])
+
+            interpreter.ExecuteBlock(body, environment)
+
+            null

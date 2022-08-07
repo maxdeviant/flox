@@ -6,6 +6,11 @@ open Flox.Expr
 open Flox.Stmt
 open Flox.Token
 
+let doWhile f condition =
+    f ()
+    while condition () do
+        f ()
+
 exception ParseError of unit
 
 type Parser(tokens: List<Token>) =
@@ -112,13 +117,13 @@ type Parser(tokens: List<Token>) =
 
             match check RightParen with
             | false ->
-                arguments.Add(expression ())
+                doWhile
+                    (fun () ->
+                        if arguments.Count >= 255 then
+                            Error.errorAtToken (peek ()) "Can't have more than 255 arguments."
 
-                while match' [Comma] do
-                    if arguments.Count >= 255 then
-                        Error.errorAtToken (peek ()) "Can't have more than 255 arguments."
-
-                    arguments.Add(expression ())
+                        arguments.Add(expression ()))
+                    (fun () -> match' [Comma])
             | true -> ()
 
             let closingParen = consume RightParen "Expected ')' after arguments."
@@ -257,6 +262,27 @@ type Parser(tokens: List<Token>) =
             | Some initializer -> Block [initializer; body]
             | None -> body)
 
+    and functionDeclaration kind =
+        let name = consume Identifier $"Expected {kind} name."
+        consume' LeftParen $"Expected '(' after {kind} name."
+
+        let parameters = List<Token>()
+        match check RightParen with
+        | false ->
+            doWhile
+                (fun () ->
+                    if parameters.Count >= 255 then
+                        Error.errorAtToken (peek ()) "Can't have more than 255 parameters."
+
+                    parameters.Add(consume Identifier "Expected parameter name."))
+                (fun () -> match' [Comma])
+        | true -> ()
+        consume' RightParen "Expected ')' after parameters."
+
+        consume' LeftBrace <| sprintf "Expected '{' before %s body." kind
+        let body = block ()
+        Stmt.Function <| FunctionDecl(name, parameters |> List.ofSeq, body)
+
     and statement () =
         match true with
         | _ when match' [For] -> forStatement ()
@@ -268,8 +294,10 @@ type Parser(tokens: List<Token>) =
 
     and declaration () =
         try
-            if match' [Var] then varDeclaration ()
-            else statement ()
+            match true with
+            | _ when match' [Fun] -> functionDeclaration "function"
+            | _ when match' [Var] -> varDeclaration ()
+            | _ -> statement ()
             |> Some
         with
         | :? ParseError as error ->
