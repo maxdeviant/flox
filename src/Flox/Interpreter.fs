@@ -35,11 +35,15 @@ type Interpreter() as interpreter =
 
     do
         globals.Define("clock",
-            { new IFloxCallable with
-                member _.Arity = 0
-                member _.Call interpreter _arguments =
-                    let timeSinceUnixEpoch = DateTime.UtcNow - DateTime.UnixEpoch
-                    timeSinceUnixEpoch.TotalSeconds
+            {
+                new obj() with
+                    override _.ToString() = "<native fn>"
+
+                interface IFloxCallable with
+                    member _.Arity = 0
+                    member _.Call interpreter _arguments =
+                        let timeSinceUnixEpoch = DateTime.UtcNow - DateTime.UnixEpoch
+                        timeSinceUnixEpoch.TotalSeconds
             })
 
     let rec evaluate expr =
