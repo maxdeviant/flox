@@ -13,8 +13,10 @@ type Environment(enclosing: Environment option) =
 
     new() = Environment(None)
 
-    member _.Define(name, value) =
-        values[name.Lexeme] <- value
+    member _.Define(name: string, value) =
+        values[name] <- value
+
+    member this.Define(name, value) = this.Define(name.Lexeme, value)
 
     member _.Get(name) =
         if values.ContainsKey(name.Lexeme) then values[name.Lexeme]

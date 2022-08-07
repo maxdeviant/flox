@@ -30,7 +30,17 @@ let isTruthy (value: obj) =
     | _ -> true
 
 type Interpreter() as interpreter =
-    let mutable environment = Environment()
+    let globals = Environment()
+    let mutable environment = globals
+
+    do
+        globals.Define("clock",
+            { new IFloxCallable with
+                member _.Arity = 0
+                member _.Call interpreter _arguments =
+                    let timeSinceUnixEpoch = DateTime.UtcNow - DateTime.UnixEpoch
+                    timeSinceUnixEpoch.TotalSeconds
+            })
 
     let rec evaluate expr =
         let isEqual (a: obj) (b: obj) =
