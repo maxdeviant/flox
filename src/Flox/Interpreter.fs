@@ -192,7 +192,7 @@ type Interpreter() as interpreter =
             
             environment.Define(name, value)
         | Stmt.Function(FunctionDecl(name, parameters, body) as decl) ->
-            let fn = FloxFunction(decl)
+            let fn = FloxFunction(decl, environment)
             environment.Define(name, fn)
 
     member _.Globals = globals
@@ -211,7 +211,7 @@ and IFloxCallable =
     abstract member Arity: int
     abstract member Call: interpreter: Interpreter -> arguments: obj list -> obj
 
-and FloxFunction(declaration: FunctionDecl) =
+and FloxFunction(declaration: FunctionDecl, closure: Environment) =
     override _.ToString() =
         let (FunctionDecl(name, _, _)) = declaration
 
@@ -226,7 +226,7 @@ and FloxFunction(declaration: FunctionDecl) =
         member _.Call interpreter arguments =
             let (FunctionDecl(_, parameters, body)) = declaration
 
-            let environment = Environment(Some interpreter.Globals)
+            let environment = Environment(Some closure)
 
             let parameterCount = parameters |> List.length
             for i = 0 to parameterCount - 1 do
